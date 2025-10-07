@@ -1,0 +1,224 @@
+import Stripe from 'stripe';
+import User from '../models/User.js';
+
+// Initialize Stripe
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+if (!stripe) {
+  console.error('⚠️  WARNING: STRIPE_SECRET_KEY is not set. Payment features will not work.');
+}
+
+// Credit packages
+const creditPackages = {
+  starter: {
+    credits: 50,
+    price: 0, // Free tier - $0
+    priceId: null
+  },
+  basic: {
+    credits: 100,
+    price: 900, // $9 in cents
+    priceId: 'price_basic'
+  },
+  pro: {
+    credits: 500,
+    price: 2900, // $29 in cents
+    priceId: 'price_pro'
+  },
+  unlimited: {
+    credits: 9999,
+    price: 9900, // $99 in cents
+    priceId: 'price_unlimited'
+  }
+};
+
+// @desc    Get user credits
+// @route   GET /api/payment/credits
+// @access  Private
+export const getUserCredits = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    res.status(200).json({
+      success: true,
+      credits: user.credits,
+      subscriptionPlan: user.subscriptionPlan,
+      totalCreditsUsed: user.totalCreditsUsed
+    });
+  } catch (error) {
+    console.error('Get credits error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching credits'
+    });
+  }
+};
+
+// @desc    Create Stripe checkout session
+// @route   POST /api/payment/create-checkout-session
+// @access  Private
+export const createCheckoutSession = async (req, res) => {
+  try {
+    const { package: packageType } = req.body;
+    
+    console.log('📦 Creating checkout for package:', packageType);
+    console.log('🔑 Request user:', req.user);
+
+    if (!stripe) {
+      console.log('❌ Stripe not initialized!');
+      return res.status(500).json({
+        success: false,
+        message: 'Payment system not configured. Please contact support.'
+      });
+    }
+
+    if (!req.user || !req.user.id) {
+      console.log('❌ No user found in request!');
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    console.log('👤 Finding user by ID:', req.user.id);
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      console.log('❌ User not found in database!');
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (!creditPackages[packageType]) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid package selected'
+      });
+    }
+
+    const pkg = creditPackages[packageType];
+
+    console.log('💰 Package details:', pkg);
+    console.log('👤 User:', user.email);
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${pkg.credits} Credits - ${packageType.charAt(0).toUpperCase() + packageType.slice(1)} Plan`,
+              description: `Get ${pkg.credits} credits for SmartContent AI`,
+            },
+            unit_amount: pkg.price,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.CLIENT_URL}/dashboard?success=true&package=${packageType}`,
+      cancel_url: `${process.env.CLIENT_URL}/dashboard?canceled=true`,
+      client_reference_id: user._id.toString(),
+      metadata: {
+        userId: user._id.toString(),
+        package: packageType,
+        credits: pkg.credits
+      }
+    });
+
+    console.log('✅ Stripe session created:', session.id);
+
+    res.status(200).json({
+      success: true,
+      sessionId: session.id,
+      url: session.url
+    });
+  } catch (error) {
+    console.error('❌ Create checkout session error:', error);
+    console.error('Error details:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating checkout session',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Handle Stripe webhook
+// @route   POST /api/payment/webhook
+// @access  Public
+export const handleWebhook = async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    
+    // Add credits to user account
+    const userId = session.metadata.userId;
+    const credits = parseInt(session.metadata.credits);
+    const packageType = session.metadata.package;
+
+    try {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { credits: credits },
+        subscriptionPlan: packageType
+      });
+
+      console.log(`✅ Added ${credits} credits to user ${userId}`);
+    } catch (error) {
+      console.error('Error updating user credits:', error);
+    }
+  }
+
+  res.json({ received: true });
+};
+
+// @desc    Use credits
+// @route   POST /api/payment/use-credits
+// @access  Private
+export const useCredits = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (user.credits < amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient credits'
+      });
+    }
+
+    user.credits -= amount;
+    user.totalCreditsUsed += amount;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      credits: user.credits,
+      message: `Used ${amount} credits`
+    });
+  } catch (error) {
+    console.error('Use credits error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error using credits'
+    });
+  }
+};

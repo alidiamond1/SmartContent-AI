@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Stripe Payment</title>
+</head>
+<body>
+    <h1>Test Stripe Checkout</h1>
+    <button onclick="testPayment()">Test Payment</button>
+    <div id="result"></div>
+
+    <script>
+        async function testPayment() {
+            const token = localStorage.getItem('token');
+            console.log('Token:', token);
+
+            if (!token) {
+                alert('No token found! Please login first at http://localhost:5173/login');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/payment/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ package: 'pro' })
+                });
+
+                const data = await response.json();
+                console.log('Response:', data);
+
+                if (data.url) {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: green;">Success! Redirecting to Stripe...</p>
+                         <p>URL: ${data.url}</p>`;
+                    setTimeout(() => {
+                        window.location.href = data.url;
+                    }, 2000);
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        `<p style="color: red;">Error: ${data.message || 'No URL received'}</p>
+                         <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
