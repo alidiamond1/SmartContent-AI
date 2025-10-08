@@ -1,0 +1,16 @@
+node_modules
+.env
+.env.local
+.env.development
+.env.test
+.DS_Store
+npm-debug.log
+yarn-error.log
+.git
+.gitignore
+README.md
+*.log
+coverage
+.vscode
+.idea
+
