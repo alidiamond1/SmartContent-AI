@@ -30,7 +30,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   process.env.CLIENT_URL,
-  'https://smart-ai-content.vercel.app/' // Your production frontend URL
+  'https://smart-ai-content.vercel.app' // Your production frontend URL
 ].filter(Boolean);
 
 app.use(cors({
