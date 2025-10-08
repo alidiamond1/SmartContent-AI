@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import BlogWriter from './pages/BlogWriter';
 import PricingPage from './pages/Pricing';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -22,6 +23,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/blog-writer"
+        element={
+          <ProtectedRoute>
+            <BlogWriter />
           </ProtectedRoute>
         }
       />

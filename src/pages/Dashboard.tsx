@@ -1,7 +1,7 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 import { 
   Home, 
   FileEdit, 
@@ -12,36 +12,79 @@ import {
   Search,
   LogOut,
   User,
-  CreditCard
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  X
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [credits, setCredits] = useState(user?.credits || 0);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Auto-dismiss notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
-    // Check for successful payment
-    if (searchParams.get('success') === 'true') {
-      alert('Payment successful! Your credits have been added.');
-      // Reload user data
+    const handlePaymentSuccess = async () => {
+      const success = searchParams.get('success');
+      const packageType = searchParams.get('package');
+      const canceled = searchParams.get('canceled');
+      
+      if (success === 'true' && packageType) {
+        try {
+          // Call backend to add credits
+          const response = await api.post('/payment/payment-success', { packageType });
+          
+          if (response.data.success) {
+            setNotification({ 
+              type: 'success', 
+              message: `Payment successful! ${response.data.message}` 
+            });
+            setCredits(response.data.credits);
+            // Refresh user data globally
+            await refreshUser();
+          }
+        } catch (error) {
+          console.error('Error processing payment success:', error);
+          setNotification({ 
+            type: 'error', 
+            message: 'Payment successful but there was an error updating credits. Please contact support.' 
+          });
+        }
+        
+        // Clear URL parameters to prevent duplicate processing
+        setSearchParams({});
+      } else if (canceled === 'true') {
+        setNotification({ 
+          type: 'error', 
+          message: 'Payment was canceled.' 
+        });
+        
+        // Clear URL parameters
+        setSearchParams({});
+      }
+      
+      // Fetch current credits
       fetchCredits();
-    } else if (searchParams.get('canceled') === 'true') {
-      alert('Payment was canceled.');
-    }
-    
-    // Fetch current credits
-    fetchCredits();
+    };
+
+    handlePaymentSuccess();
   }, [searchParams]);
 
   const fetchCredits = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/payment/credits', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/payment/credits');
       setCredits(response.data.credits);
     } catch (error) {
       console.error('Error fetching credits:', error);
@@ -50,7 +93,7 @@ export default function Dashboard() {
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: true },
-    { name: 'Blog Writer', icon: FileEdit, href: '#' },
+    { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer' },
     { name: 'Social Posts', icon: Share2, href: '#' },
     { name: 'Email Creator', icon: Mail, href: '#' },
     { name: 'Analytics', icon: TrendingUp, href: '#' },
@@ -81,9 +124,9 @@ export default function Dashboard() {
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
+                  to={item.href}
                   className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                     item.active
                       ? 'bg-blue-600/10 dark:bg-blue-600/20 text-blue-600 font-semibold'
@@ -92,7 +135,7 @@ export default function Dashboard() {
                 >
                   <Icon size={20} />
                   <span>{item.name}</span>
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -145,6 +188,40 @@ export default function Dashboard() {
             </div>
           </div>
         </header>
+
+        {/* Notification Toast */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-5 duration-300">
+            <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg ${
+              notification.type === 'success' 
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            }`}>
+              {notification.type === 'success' ? (
+                <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
+              ) : (
+                <XCircle className="text-red-600 dark:text-red-400" size={24} />
+              )}
+              <p className={`text-sm font-medium ${
+                notification.type === 'success' 
+                  ? 'text-green-800 dark:text-green-300' 
+                  : 'text-red-800 dark:text-red-300'
+              }`}>
+                {notification.message}
+              </p>
+              <button
+                onClick={() => setNotification(null)}
+                className={`ml-4 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 transition-colors ${
+                  notification.type === 'success' 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
+                }`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Dashboard Content */}
         <div className="p-10">

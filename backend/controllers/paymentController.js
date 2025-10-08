@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import User from '../models/User.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Initialize Stripe
 const stripe = process.env.STRIPE_SECRET_KEY 
@@ -188,6 +190,82 @@ export const handleWebhook = async (req, res) => {
   }
 
   res.json({ received: true });
+};
+
+// Track recently processed payments to prevent duplicates (in-memory cache)
+const recentPayments = new Map();
+
+// @desc    Handle successful payment callback
+// @route   POST /api/payment/payment-success
+// @access  Private
+export const handlePaymentSuccess = async (req, res) => {
+  try {
+    const { packageType } = req.body;
+    
+    console.log('💳 Processing payment success for package:', packageType);
+    console.log('👤 User ID:', req.user.id);
+
+    if (!creditPackages[packageType]) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid package selected'
+      });
+    }
+
+    // Check for duplicate payment processing (within last 10 seconds)
+    const paymentKey = `${req.user.id}-${packageType}`;
+    const lastProcessed = recentPayments.get(paymentKey);
+    const now = Date.now();
+    
+    if (lastProcessed && (now - lastProcessed) < 10000) {
+      console.log('⚠️  Duplicate payment request detected, skipping...');
+      const user = await User.findById(req.user.id);
+      return res.status(200).json({
+        success: true,
+        credits: user.credits,
+        subscriptionPlan: user.subscriptionPlan,
+        message: `You already have ${creditPackages[packageType].credits} credits`
+      });
+    }
+
+    const pkg = creditPackages[packageType];
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Add credits to user account
+    user.credits += pkg.credits;
+    user.subscriptionPlan = packageType;
+    await user.save();
+
+    // Mark this payment as processed
+    recentPayments.set(paymentKey, now);
+    
+    // Clean up old entries after 30 seconds
+    setTimeout(() => {
+      recentPayments.delete(paymentKey);
+    }, 30000);
+
+    console.log(`✅ Added ${pkg.credits} credits to user ${user.email}. New balance: ${user.credits}`);
+
+    res.status(200).json({
+      success: true,
+      credits: user.credits,
+      subscriptionPlan: user.subscriptionPlan,
+      message: `Successfully added ${pkg.credits} credits`
+    });
+  } catch (error) {
+    console.error('❌ Payment success handler error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing payment success'
+    });
+  }
 };
 
 // @desc    Use credits

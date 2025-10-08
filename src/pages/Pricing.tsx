@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../config/api';
 
 interface PricingPlan {
   name: string;
@@ -93,15 +93,9 @@ export default function PricingPage() {
     setLoading(packageType);
 
     try {
-      const response = await axios.post(
-        'http://localhost:5000/api/payment/create-checkout-session',
-        { package: packageType },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+      const response = await api.post('/payment/create-checkout-session', { 
+        package: packageType 
+      });
 
       console.log('Checkout response:', response.data);
 

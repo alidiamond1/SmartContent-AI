@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 
 interface User {
   id: string;
@@ -17,14 +17,11 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, confirmPassword: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:5000/api';
-axios.defaults.withCredentials = true;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,11 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await axios.get('/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await api.get('/auth/me');
         setUser(response.data.user);
       }
     } catch (error) {
@@ -58,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       setLoading(true);
-      const response = await axios.post('/auth/register', {
+      const response = await api.post('/auth/register', {
         name,
         email,
         password,
@@ -80,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setError(null);
       setLoading(true);
-      const response = await axios.post('/auth/login', {
+      const response = await api.post('/auth/login', {
         email,
         password
       });
@@ -98,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await axios.post('/auth/logout');
+      await api.post('/auth/logout');
       localStorage.removeItem('token');
       setUser(null);
     } catch (error) {
@@ -106,8 +99,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await api.get('/auth/me');
+        setUser(response.data.user);
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, error }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, error }}>
       {children}
     </AuthContext.Provider>
   );
