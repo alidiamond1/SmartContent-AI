@@ -1,0 +1,10 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="24" cy="24" r="24" fill="#2563EB"/>
+  
+  <!-- AI Sparkle/Star Icon -->
+  <path d="M24 8L26.5 18.5L37 21L26.5 23.5L24 34L21.5 23.5L11 21L21.5 18.5L24 8Z" fill="white"/>
+  <path d="M33 12L34.5 17.5L40 19L34.5 20.5L33 26L31.5 20.5L26 19L31.5 17.5L33 12Z" fill="white" opacity="0.8"/>
+  <path d="M15 28L16.5 33.5L22 35L16.5 36.5L15 42L13.5 36.5L8 35L13.5 33.5L15 28Z" fill="white" opacity="0.8"/>
+</svg>
+
