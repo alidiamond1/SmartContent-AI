@@ -13,6 +13,56 @@ if (!genAI) {
   console.error('⚠️  WARNING: GEMINI_API_KEY is not set. AI features will not work.');
 }
 
+// Unsplash Access Key
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || null;
+
+// Helper function to fetch relevant image from Unsplash
+const fetchBlogImage = async (title, keywords) => {
+  try {
+    // Extract search query from title and keywords
+    const searchQuery = keywords || title.split(' ').slice(0, 3).join(' ');
+    
+    if (UNSPLASH_ACCESS_KEY) {
+      // Use Unsplash API
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&per_page=1&orientation=landscape`,
+        {
+          headers: {
+            'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        const photo = data.results[0];
+        return {
+          imageUrl: photo.urls.regular,
+          imageAlt: photo.alt_description || title,
+          imageCredit: `Photo by ${photo.user.name} on Unsplash`
+        };
+      }
+    }
+    
+    // Fallback to Picsum (Lorem Picsum) - random beautiful images
+    const randomId = Math.floor(Math.random() * 1000);
+    return {
+      imageUrl: `https://picsum.photos/seed/${encodeURIComponent(title)}/1200/630`,
+      imageAlt: title,
+      imageCredit: 'Image from Picsum Photos'
+    };
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    // Return a default placeholder
+    return {
+      imageUrl: 'https://picsum.photos/1200/630',
+      imageAlt: title,
+      imageCredit: 'Image from Picsum Photos'
+    };
+  }
+};
+
 // @desc    Generate blog outline
 // @route   POST /api/blog/generate-outline
 // @access  Private
@@ -51,6 +101,9 @@ Please provide a structured outline with main sections and bullet points. Make i
     const response = await result.response;
     const outline = response.text();
 
+    // Fetch relevant image
+    const imageData = await fetchBlogImage(title, keywords);
+
     // Deduct 1 credit
     user.credits -= 1;
     user.totalCreditsUsed += 1;
@@ -59,6 +112,7 @@ Please provide a structured outline with main sections and bullet points. Make i
     res.status(200).json({
       success: true,
       outline,
+      imageData,
       remainingCredits: user.credits
     });
   } catch (error) {
@@ -120,6 +174,9 @@ Write the complete blog post now:`;
     const response = await result.response;
     const content = response.text();
 
+    // Fetch relevant image
+    const imageData = await fetchBlogImage(title, keywords);
+
     // Deduct 3 credits
     user.credits -= 3;
     user.totalCreditsUsed += 3;
@@ -128,6 +185,7 @@ Write the complete blog post now:`;
     res.status(200).json({
       success: true,
       content,
+      imageData,
       remainingCredits: user.credits
     });
   } catch (error) {
@@ -145,7 +203,7 @@ Write the complete blog post now:`;
 // @access  Private
 export const saveBlog = async (req, res) => {
   try {
-    const { title, content, structure, keywords, tone } = req.body;
+    const { title, content, structure, keywords, tone, imageUrl, imageAlt, imageCredit } = req.body;
 
     const blog = await Blog.create({
       user: req.user.id,
@@ -153,7 +211,10 @@ export const saveBlog = async (req, res) => {
       content,
       structure,
       keywords,
-      tone
+      tone,
+      imageUrl,
+      imageAlt,
+      imageCredit
     });
 
     res.status(201).json({

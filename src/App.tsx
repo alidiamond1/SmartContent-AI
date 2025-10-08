@@ -7,6 +7,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import BlogWriter from './pages/BlogWriter';
 import PricingPage from './pages/Pricing';
+import MyBlogs from './pages/MyBlogs';
+import BlogDetail from './pages/BlogDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppRoutes() {
@@ -31,6 +33,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BlogWriter />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-blogs"
+        element={
+          <ProtectedRoute>
+            <MyBlogs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/blog/:id"
+        element={
+          <ProtectedRoute>
+            <BlogDetail />
           </ProtectedRoute>
         }
       />

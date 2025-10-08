@@ -15,7 +15,8 @@ import {
   CreditCard,
   CheckCircle,
   XCircle,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -94,6 +95,7 @@ export default function Dashboard() {
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: true },
     { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer' },
+    { name: 'My Blogs', icon: FileText, href: '/my-blogs' },
     { name: 'Social Posts', icon: Share2, href: '#' },
     { name: 'Email Creator', icon: Mail, href: '#' },
     { name: 'Analytics', icon: TrendingUp, href: '#' },

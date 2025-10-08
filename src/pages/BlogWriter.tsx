@@ -18,7 +18,8 @@ import {
   Save,
   Download,
   Eye,
-  Edit3
+  Edit3,
+  FileText
 } from 'lucide-react';
 
 interface Message {
@@ -38,6 +39,11 @@ export default function BlogWriter() {
   const [keywords, setKeywords] = useState('');
   const [tone, setTone] = useState('Professional');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  
+  // Image state
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [imageCredit, setImageCredit] = useState('');
   
   // AI Assistant state
   const [messages, setMessages] = useState<Message[]>([
@@ -83,6 +89,14 @@ export default function BlogWriter() {
 
       setContent(response.data.outline);
       setCredits(response.data.remainingCredits);
+      
+      // Set image data if available
+      if (response.data.imageData) {
+        setImageUrl(response.data.imageData.imageUrl);
+        setImageAlt(response.data.imageData.imageAlt);
+        setImageCredit(response.data.imageData.imageCredit);
+      }
+      
       await refreshUser();
     } catch (error: any) {
       console.error('Error generating outline:', error);
@@ -116,6 +130,14 @@ export default function BlogWriter() {
 
       setContent(response.data.content);
       setCredits(response.data.remainingCredits);
+      
+      // Set image data if available
+      if (response.data.imageData) {
+        setImageUrl(response.data.imageData.imageUrl);
+        setImageAlt(response.data.imageData.imageAlt);
+        setImageCredit(response.data.imageData.imageCredit);
+      }
+      
       await refreshUser();
     } catch (error: any) {
       console.error('Error generating blog:', error);
@@ -138,7 +160,10 @@ export default function BlogWriter() {
         content,
         structure,
         keywords,
-        tone
+        tone,
+        imageUrl,
+        imageAlt,
+        imageCredit
       });
 
       alert('Blog post saved successfully!');
@@ -195,6 +220,7 @@ export default function BlogWriter() {
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: false },
     { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer', active: true },
+    { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: false },
     { name: 'Social Posts', icon: Share2, href: '#' },
     { name: 'Email Creator', icon: Mail, href: '#' },
     { name: 'Analytics', icon: TrendingUp, href: '#' },
@@ -301,6 +327,22 @@ export default function BlogWriter() {
             {/* Main Editor */}
             <div className="col-span-1 flex flex-col gap-6 lg:col-span-2">
               <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+                {/* Featured Image */}
+                {imageUrl && (
+                  <div className="relative">
+                    <img 
+                      src={imageUrl} 
+                      alt={imageAlt || title}
+                      className="w-full h-64 object-cover rounded-t-lg"
+                    />
+                    {imageCredit && (
+                      <p className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                        {imageCredit}
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="p-4">
                   <input
                     className="w-full border-0 bg-transparent p-0 text-xl font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0"

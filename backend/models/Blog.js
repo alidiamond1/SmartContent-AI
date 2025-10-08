@@ -30,6 +30,18 @@ const blogSchema = new mongoose.Schema({
     enum: ['Professional', 'Casual', 'Witty', 'Persuasive'],
     default: 'Professional'
   },
+  imageUrl: {
+    type: String,
+    trim: true
+  },
+  imageAlt: {
+    type: String,
+    trim: true
+  },
+  imageCredit: {
+    type: String,
+    trim: true
+  },
   status: {
     type: String,
     enum: ['draft', 'published'],
