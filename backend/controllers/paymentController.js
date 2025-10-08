@@ -107,6 +107,14 @@ export const createCheckoutSession = async (req, res) => {
     console.log('💰 Package details:', pkg);
     console.log('👤 User:', user.email);
 
+    // Determine the frontend URL (production or development)
+    const frontendUrl = process.env.CLIENT_URL || 
+                       (process.env.NODE_ENV === 'production' 
+                         ? 'https://smart-ai-content.vercel.app' 
+                         : 'http://localhost:5173');
+
+    console.log('🌐 Using frontend URL:', frontendUrl);
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -124,8 +132,8 @@ export const createCheckoutSession = async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.CLIENT_URL}/dashboard?success=true&package=${packageType}`,
-      cancel_url: `${process.env.CLIENT_URL}/dashboard?canceled=true`,
+      success_url: `${frontendUrl}/dashboard?success=true&package=${packageType}`,
+      cancel_url: `${frontendUrl}/dashboard?canceled=true`,
       client_reference_id: user._id.toString(),
       metadata: {
         userId: user._id.toString(),
