@@ -108,12 +108,23 @@ export const createCheckoutSession = async (req, res) => {
     console.log('👤 User:', user.email);
 
     // Determine the frontend URL (production or development)
-    const frontendUrl = process.env.CLIENT_URL || 
-                       (process.env.NODE_ENV === 'production' 
-                         ? 'https://smart-ai-content.vercel.app' 
-                         : 'http://localhost:5173');
+    // Priority: CLIENT_URL env var > Vercel detection > default production
+    let frontendUrl;
+    
+    if (process.env.CLIENT_URL && process.env.CLIENT_URL !== 'http://localhost:5173') {
+      frontendUrl = process.env.CLIENT_URL;
+    } else if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      // We're on Vercel production, use live frontend URL
+      frontendUrl = 'https://smart-ai-content.vercel.app';
+    } else {
+      // Local development
+      frontendUrl = 'http://localhost:5173';
+    }
 
     console.log('🌐 Using frontend URL:', frontendUrl);
+    console.log('🔧 VERCEL env:', process.env.VERCEL);
+    console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔧 CLIENT_URL:', process.env.CLIENT_URL);
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
