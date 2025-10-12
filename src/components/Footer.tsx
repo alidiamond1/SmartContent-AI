@@ -30,10 +30,10 @@ export default function Footer() {
   };
 
   const socialLinks = [
-    { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: Github, href: '#', label: 'GitHub' },
-    { icon: Mail, href: '#contact', label: 'Email' }
+    { icon: Twitter, href: 'https://x.com/Alidiamond143', label: 'Twitter' },
+    { icon: Linkedin, href: 'https://www.linkedin.com/in/ali-diamond-19b8052b9', label: 'LinkedIn' },
+    { icon: Github, href: 'https://github.com/alidiamond1', label: 'GitHub' },
+    { icon: Mail, href: 'mailto:calinuurcabdulle11@gmail.com', label: 'Email' }
   ];
 
   return (

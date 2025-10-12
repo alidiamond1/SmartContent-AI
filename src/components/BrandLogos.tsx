@@ -1,13 +1,87 @@
 import { Award, TrendingUp, Users, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
+interface MarqueeProps {
+  children: React.ReactNode;
+  direction?: "left" | "right";
+  speed?: number;
+  pauseOnHover?: boolean;
+  className?: string;
+}
+
+const Marquee = ({
+  children,
+  direction = "left",
+  speed = 50,
+  pauseOnHover = true,
+  className = "",
+}: MarqueeProps) => {
+  const [contentWidth, setContentWidth] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentWidth(contentRef.current.scrollWidth);
+    }
+  }, [children]);
+
+  return (
+    <div
+      className={`overflow-hidden relative ${className}`}
+      onMouseEnter={() => pauseOnHover && setIsPaused(true)}
+      onMouseLeave={() => pauseOnHover && setIsPaused(false)}
+    >
+      <div
+        className={`flex min-w-full gap-4`}
+        style={{
+          transform: `translateX(${direction === "left" ? "-" : ""}${isPaused ? contentWidth / 4 : 0}px)`,
+          animation: `scroll-${direction} ${contentWidth / speed}s linear infinite`,
+          animationPlayState: isPaused ? "paused" : "running",
+        }}
+      >
+        <div ref={contentRef} className="flex gap-4 shrink-0">
+          {children}
+        </div>
+        <div className="flex gap-4 shrink-0">{children}</div>
+      </div>
+
+      <style>
+        {`
+          @keyframes scroll-left {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+          }
+          @keyframes scroll-right {
+            from { transform: translateX(-50%); }
+            to { transform: translateX(0); }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
 
 export default function BrandLogos() {
   const brands = [
-    { name: 'TechCorp', logo: 'https://via.placeholder.com/120x60/3B82F6/FFFFFF?text=TechCorp' },
-    { name: 'InnovateHub', logo: 'https://via.placeholder.com/120x60/8B5CF6/FFFFFF?text=InnovateHub' },
-    { name: 'CreativeFlow', logo: 'https://via.placeholder.com/120x60/10B981/FFFFFF?text=CreativeFlow' },
-    { name: 'DataDrive', logo: 'https://via.placeholder.com/120x60/F59E0B/FFFFFF?text=DataDrive' },
-    { name: 'CloudSync', logo: 'https://via.placeholder.com/120x60/EF4444/FFFFFF?text=CloudSync' },
-    { name: 'DigitalPro', logo: 'https://via.placeholder.com/120x60/EC4899/FFFFFF?text=DigitalPro' }
+    { name: 'TechCorp', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=TechCorp&backgroundColor=3B82F6' },
+    { name: 'InnovateHub', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=InnovateHub&backgroundColor=8B5CF6' },
+    { name: 'CreativeFlow', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CreativeFlow&backgroundColor=10B981' },
+    { name: 'DataDrive', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=DataDrive&backgroundColor=F59E0B' },
+    { name: 'CloudSync', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CloudSync&backgroundColor=EF4444' },
+    { name: 'DigitalPro', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=DigitalPro&backgroundColor=EC4899' },
+    { name: 'NexusLabs', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=NexusLabs&backgroundColor=0EA5E9' },
+    { name: 'QuantumAI', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=QuantumAI&backgroundColor=6366F1' },
+    { name: 'SparkMedia', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=SparkMedia&backgroundColor=F97316' },
+    { name: 'BrightPath', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=BrightPath&backgroundColor=14B8A6' },
+    { name: 'VelocityLabs', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=VelocityLabs&backgroundColor=8B5CF6' },
+    { name: 'FusionWorks', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=FusionWorks&backgroundColor=06B6D4' },
+    { name: 'ApexSystems', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=ApexSystems&backgroundColor=2563EB' },
+    { name: 'EchoNet', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=EchoNet&backgroundColor=7C3AED' },
+    { name: 'PrimeLogic', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=PrimeLogic&backgroundColor=DC2626' },
+    { name: 'ZenithTech', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=ZenithTech&backgroundColor=059669' },
+    { name: 'CoreVision', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=CoreVision&backgroundColor=DB2777' },
+    { name: 'Luminary', logo: 'https://api.dicebear.com/7.x/initials/svg?seed=Luminary&backgroundColor=D97706' }
   ];
 
   const stats = [
@@ -36,18 +110,13 @@ export default function BrandLogos() {
           </p>
         </div>
 
-        {/* Brand Logos Grid */}
-        <div className="relative">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-8 items-center justify-items-center mb-20">
+        {/* Brand Logos Marquee */}
+        <div className="relative mb-20">
+          <Marquee direction="left" speed={35} pauseOnHover={true} className="py-4">
             {brands.map((brand, index) => (
               <div
                 key={index}
-                className="group relative w-full max-w-[140px] h-20 flex items-center justify-center rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 overflow-hidden"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animation: 'fadeIn 0.6s ease-out forwards',
-                  opacity: 0
-                }}
+                className="group relative w-[180px] h-24 flex items-center justify-center rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 overflow-hidden"
               >
                 <img
                   src={brand.logo}
@@ -58,10 +127,7 @@ export default function BrandLogos() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             ))}
-          </div>
-
-          {/* Animated gradient line */}
-          <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+          </Marquee>
         </div>
 
         {/* Stats Section */}
@@ -119,17 +185,6 @@ export default function BrandLogos() {
       </div>
 
       <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
         @keyframes fadeInUp {
           from {
             opacity: 0;
