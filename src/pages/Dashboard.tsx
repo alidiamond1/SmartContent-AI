@@ -1,5 +1,6 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect } from 'react';
 import api from '../config/api';
 import { 
@@ -16,15 +17,36 @@ import {
   CheckCircle,
   XCircle,
   X,
-  FileText
+  FileText,
+  Moon,
+  Sun,
+  Sparkles,
+  ArrowRight,
+  Clock,
+  BarChart3,
+  Zap,
+  PenTool,
+  Image as ImageIcon,
+  Calendar
 } from 'lucide-react';
+
+interface RecentActivity {
+  id: string;
+  type: 'blog' | 'social';
+  title: string;
+  createdAt: string;
+}
 
 export default function Dashboard() {
   const { user, logout, refreshUser } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [credits, setCredits] = useState(user?.credits || 0);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [stats, setStats] = useState({ blogs: 0, posts: 0, totalContent: 0 });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // Auto-dismiss notification after 5 seconds
   useEffect(() => {
@@ -92,13 +114,76 @@ export default function Dashboard() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const [blogsRes, postsRes] = await Promise.all([
+        api.get('/blog/my-blogs'),
+        api.get('/social-post/my-posts')
+      ]);
+      
+      const blogCount = blogsRes.data.blogs?.length || 0;
+      const postCount = postsRes.data.posts?.length || 0;
+      
+      setStats({
+        blogs: blogCount,
+        posts: postCount,
+        totalContent: blogCount + postCount
+      });
+
+      // Set recent activity (combine blogs and posts, sort by date)
+      const blogs = (blogsRes.data.blogs || []).map((blog: any) => ({
+        id: blog._id,
+        type: 'blog' as const,
+        title: blog.title,
+        createdAt: blog.createdAt
+      }));
+
+      const posts = (postsRes.data.posts || []).map((post: any) => ({
+        id: post._id,
+        type: 'social' as const,
+        title: post.topic,
+        createdAt: post.createdAt
+      }));
+
+      const combined = [...blogs, ...posts]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+
+      setRecentActivity(combined);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showProfileDropdown && !target.closest('#profile-dropdown')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileDropdown]);
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    logout();
+  };
+
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: true },
-    { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer' },
-    { name: 'My Blogs', icon: FileText, href: '/my-blogs' },
-    { name: 'Social Posts', icon: Share2, href: '#' },
-    { name: 'Email Creator', icon: Mail, href: '#' },
-    { name: 'Analytics', icon: TrendingUp, href: '#' },
+    { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer', active: false },
+    { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: false },
+    { name: 'Social Posts', icon: Share2, href: '/social-posts', active: false },
+    { name: 'My Posts', icon: Share2, href: '/my-social-posts', active: false },
+    { name: 'Pricing', icon: CreditCard, href: '/pricing', active: false },
   ];
 
   return (
@@ -145,13 +230,25 @@ export default function Dashboard() {
 
         {/* Bottom Section */}
         <div className="flex flex-col gap-2">
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-blue-600/10 dark:hover:bg-blue-600/20 hover:text-blue-600 transition-colors"
-          >
-            <Settings size={20} />
-            <span>Settings</span>
-          </a>
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg mb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Zap size={14} className="text-amber-600" />
+              <span className="text-gray-700 dark:text-gray-300">{credits} Credits</span>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -177,23 +274,141 @@ export default function Dashboard() {
               {credits} Credits
             </button>
             <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || <User size={20} />}
-              </div>
               <button
-                onClick={logout}
+                onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title="Logout"
+                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                <LogOut size={20} className="text-gray-600 dark:text-gray-400" />
+                {isDarkMode ? (
+                  <Sun size={20} className="text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <Moon size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
               </button>
+              
+              {/* Profile Dropdown */}
+              <div className="relative" id="profile-dropdown">
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold ring-2 ring-blue-200 dark:ring-blue-800">
+                    {user?.name?.charAt(0).toUpperCase() || <User size={20} />}
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-in slide-in-from-top-5 duration-200">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {user?.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Zap size={16} className="text-amber-600" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {credits} Credits
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false);
+                            navigate('/pricing');
+                          }}
+                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          Buy More
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/dashboard');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <Home size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Dashboard</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/my-blogs');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <FileText size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">My Content</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/pricing');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <CreditCard size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Pricing</span>
+                      </button>
+
+                      <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        {isDarkMode ? (
+                          <>
+                            <Sun size={18} className="text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Light Mode</span>
+                          </>
+                        ) : (
+                          <>
+                            <Moon size={18} className="text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left group"
+                      >
+                        <LogOut size={18} className="text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400">
+                          Logout
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
 
         {/* Notification Toast */}
         {notification && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-5 duration-300">
+          <div className="fixed top-4 right-4 z-[60] animate-in slide-in-from-top-5 duration-300">
             <div className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg ${
               notification.type === 'success' 
                 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
@@ -226,61 +441,254 @@ export default function Dashboard() {
         )}
 
         {/* Dashboard Content */}
-        <div className="p-10">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-8">
-            Welcome back, {user?.name}! Let's create something amazing today!
-          </p>
-
-          {/* Overview Section */}
-          <div className="mb-12">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Overview</h3>
-            <div 
-              className="w-full bg-center bg-no-repeat aspect-[2/1] bg-cover rounded-xl shadow-lg"
-              style={{
-                backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCy3c1dotaK8y8U16myHGji-udpH2cHXX4xi0fwRNRjDbMn5D62ooNT7m_KoGtdqthCac6DJV0StfdYhBSgVkVoI-tR_-JHmNdi88yWcy5CVG_F4vDytvtaILrajRfDd4Q3oiTsn8Hu4Ze4W7UBkNnwF4ixlTIWHBLmMLiU2VAd_jxY0Z1wW8Qnan4c0l3rGF102M1pKgqIHxF6AvCtoI_5zAogWK1NHl_TLuWcCthfKfAiWni--pAdlsAgbhTL2pcm3A9vf0N-Q')"
-              }}
-            />
+        <div className="p-6 lg:p-10 bg-gradient-to-br from-gray-50 via-blue-50/20 to-purple-50/20 dark:from-gray-900 dark:via-blue-950/10 dark:to-purple-950/10">
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              Welcome back, {user?.name}! 👋
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              Let's create something amazing today!
+            </p>
           </div>
 
-          {/* Engagement Metrics */}
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Engagement Metrics</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Chart Card */}
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-300 font-medium">Social Media Engagement</p>
-                    <p className="text-4xl font-bold text-gray-900 dark:text-white mt-1">+15%</p>
-                  </div>
-                  <div className="flex gap-2 items-center text-green-500 font-semibold">
-                    <span>+15%</span>
-                  </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Content */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <Sparkles size={24} />
                 </div>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">vs. Last 30 Days</p>
-                <div className="mt-8 h-48">
-                  <svg fill="none" height="100%" preserveAspectRatio="none" viewBox="0 0 472 150" width="100%" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25V149H0V109Z" fill="url(#paint0_linear_refactored)"></path>
-                    <path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25" stroke="url(#paint1_linear_refactored)" strokeLinecap="round" strokeWidth="3"></path>
-                    <defs>
-                      <linearGradient gradientUnits="userSpaceOnUse" id="paint0_linear_refactored" x1="236" x2="236" y1="1" y2="149">
-                        <stop stopColor="#2563eb" stopOpacity="0.2"></stop>
-                        <stop offset="1" stopColor="#2563eb" stopOpacity="0"></stop>
-                      </linearGradient>
-                      <linearGradient gradientUnits="userSpaceOnUse" id="paint1_linear_refactored" x1="0" x2="472" y1="75" y2="75">
-                        <stop stopColor="#2563eb"></stop>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                <div className="text-right">
+                  <p className="text-3xl font-bold">{stats.totalContent}</p>
+                  <p className="text-blue-100 text-sm">Total Content</p>
                 </div>
               </div>
+              <div className="flex items-center gap-2 text-blue-100 text-sm">
+                <TrendingUp size={16} />
+                <span>All time</span>
+              </div>
+            </div>
 
-              {/* Coming Soon Card */}
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col justify-center items-center text-center">
-                <p className="text-gray-600 dark:text-gray-300 font-medium">Coming Soon</p>
-                <p className="text-lg font-semibold text-gray-800 dark:text-white mt-2">More analytics are on the way!</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Stay tuned for updates.</p>
+            {/* Blog Posts */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                  <FileText size={24} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.blogs}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Blog Posts</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/blog-writer')}
+                className="flex items-center gap-2 text-purple-600 dark:text-purple-400 text-sm font-medium hover:gap-3 transition-all"
+              >
+                Create new <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Social Posts */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-xl">
+                  <Share2 size={24} className="text-pink-600 dark:text-pink-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.posts}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Social Posts</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/social-posts')}
+                className="flex items-center gap-2 text-pink-600 dark:text-pink-400 text-sm font-medium hover:gap-3 transition-all"
+              >
+                Create new <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Credits */}
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <Zap size={24} />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold">{credits}</p>
+                  <p className="text-orange-100 text-sm">AI Credits</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/pricing')}
+                className="flex items-center gap-2 text-orange-100 text-sm font-medium hover:text-white hover:gap-3 transition-all"
+              >
+                Buy more <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Actions & Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Quick Actions */}
+            <div className="lg:col-span-1">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Zap className="text-blue-600" size={24} />
+                  Quick Actions
+                </h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => navigate('/blog-writer')}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 hover:from-blue-100 hover:to-purple-100 dark:hover:from-blue-900/30 dark:hover:to-purple-900/30 transition-all group"
+                  >
+                    <div className="p-2 bg-blue-600 rounded-lg text-white">
+                      <PenTool size={20} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">Write Blog</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Create AI-powered content</p>
+                    </div>
+                    <ArrowRight size={20} className="text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/social-posts')}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 hover:from-pink-100 hover:to-purple-100 dark:hover:from-pink-900/30 dark:hover:to-purple-900/30 transition-all group"
+                  >
+                    <div className="p-2 bg-pink-600 rounded-lg text-white">
+                      <Share2 size={20} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">Social Post</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Generate viral content</p>
+                    </div>
+                    <ArrowRight size={20} className="text-gray-400 group-hover:text-pink-600 group-hover:translate-x-1 transition-all" />
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/my-blogs')}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 transition-all group"
+                  >
+                    <div className="p-2 bg-green-600 rounded-lg text-white">
+                      <FileText size={20} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white">My Content</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">View saved work</p>
+                    </div>
+                    <ArrowRight size={20} className="text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Clock className="text-blue-600" size={24} />
+                    Recent Activity
+                  </h3>
+                  <button
+                    onClick={() => navigate('/my-blogs')}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    View all
+                  </button>
+                </div>
+
+                {recentActivity.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block p-4 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+                      <FileText size={32} className="text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No content yet</p>
+                    <button
+                      onClick={() => navigate('/blog-writer')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Create your first content
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentActivity.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (activity.type === 'blog') {
+                            navigate('/my-blogs');
+                          } else {
+                            navigate('/my-social-posts');
+                          }
+                        }}
+                      >
+                        <div className={`p-3 rounded-lg ${
+                          activity.type === 'blog'
+                            ? 'bg-purple-100 dark:bg-purple-900/30'
+                            : 'bg-pink-100 dark:bg-pink-900/30'
+                        }`}>
+                          {activity.type === 'blog' ? (
+                            <FileText size={20} className="text-purple-600 dark:text-purple-400" />
+                          ) : (
+                            <Share2 size={20} className="text-pink-600 dark:text-pink-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">
+                            {activity.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="capitalize">{activity.type}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Calendar size={14} />
+                              {new Date(activity.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <ArrowRight size={20} className="text-gray-400 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Features Overview */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm mb-4">
+                  <Sparkles size={32} />
+                </div>
+                <h4 className="text-xl font-bold mb-2">AI-Powered Writing</h4>
+                <p className="text-blue-100 text-sm">
+                  Generate high-quality content with advanced AI technology
+                </p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm mb-4">
+                  <ImageIcon size={32} />
+                </div>
+                <h4 className="text-xl font-bold mb-2">Smart Images</h4>
+                <p className="text-blue-100 text-sm">
+                  Automatic image suggestions for every piece of content
+                </p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm mb-4">
+                  <BarChart3 size={32} />
+                </div>
+                <h4 className="text-xl font-bold mb-2">Multi-Platform</h4>
+                <p className="text-blue-100 text-sm">
+                  Create content optimized for blogs and social media
+                </p>
               </div>
             </div>
           </div>

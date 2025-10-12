@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect } from 'react';
 import api from '../config/api';
 import { 
   Home, 
   FileEdit, 
   Share2, 
-  Mail, 
   TrendingUp, 
   Settings, 
   Search,
@@ -16,10 +16,12 @@ import {
   Send,
   Sparkles,
   Save,
-  Download,
   Eye,
   Edit3,
-  FileText
+  FileText,
+  Moon,
+  Sun,
+  Zap
 } from 'lucide-react';
 
 interface Message {
@@ -29,6 +31,7 @@ interface Message {
 
 export default function BlogWriter() {
   const { user, logout, refreshUser } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [credits, setCredits] = useState(user?.credits || 0);
   
@@ -52,10 +55,29 @@ export default function BlogWriter() {
   const [inputMessage, setInputMessage] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   useEffect(() => {
     fetchCredits();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showProfileDropdown && !target.closest('#profile-dropdown')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileDropdown]);
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    logout();
+  };
 
   const fetchCredits = async () => {
     try {
@@ -155,7 +177,7 @@ export default function BlogWriter() {
 
     setIsSaving(true);
     try {
-      const response = await api.post('/blog/save', {
+      await api.post('/blog/save', {
         title,
         content,
         structure,
@@ -202,27 +224,52 @@ export default function BlogWriter() {
   const formatContent = (text: string) => {
     if (!text) return '';
     
-    return text
-      // Headers
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-6 mb-3">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-8 mb-4">$1</h1>')
-      // Bold
-      .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold">$1</strong>')
-      // Italic
-      .replace(/\*(.*?)\*/gim, '<em class="italic">$1</em>')
-      // Line breaks
-      .replace(/\n/gim, '<br />')
-      // Lists
-      .replace(/^- (.*$)/gim, '<li class="ml-4">• $1</li>');
+    let formattedText = text;
+    
+    // Headers (must be processed before other formatting)
+    formattedText = formattedText.replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-gray-900 dark:text-white">$1</h3>');
+    formattedText = formattedText.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-6 mb-3 text-gray-900 dark:text-white">$1</h2>');
+    formattedText = formattedText.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-white">$1</h1>');
+    
+    // Bold (** or __) - process before italic
+    formattedText = formattedText.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>');
+    formattedText = formattedText.replace(/__(.+?)__/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>');
+    
+    // Italic (* or _) - process after bold
+    formattedText = formattedText.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
+    formattedText = formattedText.replace(/_(.+?)_/g, '<em class="italic">$1</em>');
+    
+    // Links [text](url)
+    formattedText = formattedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank">$1</a>');
+    
+    // Code blocks ```code```
+    formattedText = formattedText.replace(/```([^`]+)```/g, '<code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono">$1</code>');
+    
+    // Inline code `code`
+    formattedText = formattedText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+    
+    // Unordered lists
+    formattedText = formattedText.replace(/^\* (.*$)/gim, '<li class="ml-6 mb-1">• $1</li>');
+    formattedText = formattedText.replace(/^- (.*$)/gim, '<li class="ml-6 mb-1">• $1</li>');
+    
+    // Ordered lists
+    formattedText = formattedText.replace(/^\d+\. (.*$)/gim, '<li class="ml-6 mb-1 list-decimal">$1</li>');
+    
+    // Blockquotes
+    formattedText = formattedText.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-blue-600 pl-4 italic text-gray-600 dark:text-gray-400 my-2">$1</blockquote>');
+    
+    // Line breaks
+    formattedText = formattedText.replace(/\n/gim, '<br />');
+    
+    return formattedText;
   };
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: false },
     { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer', active: true },
     { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: false },
-    { name: 'Social Posts', icon: Share2, href: '#' },
-    { name: 'Email Creator', icon: Mail, href: '#' },
+    { name: 'Social Posts', icon: Share2, href: '/social-posts' },
+    { name: 'My Posts', icon: Share2, href: '/my-social-posts' },
     { name: 'Analytics', icon: TrendingUp, href: '#' },
   ];
 
@@ -302,16 +349,134 @@ export default function BlogWriter() {
               {credits} Credits
             </button>
             <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || <User size={20} />}
-              </div>
               <button
-                onClick={logout}
+                onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title="Logout"
+                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                <LogOut size={20} className="text-gray-600 dark:text-gray-400" />
+                {isDarkMode ? (
+                  <Sun size={20} className="text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <Moon size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
               </button>
+              
+              {/* Profile Dropdown */}
+              <div className="relative" id="profile-dropdown">
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold ring-2 ring-blue-200 dark:ring-blue-800">
+                    {user?.name?.charAt(0).toUpperCase() || <User size={20} />}
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-in slide-in-from-top-5 duration-200">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {user?.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Zap size={16} className="text-amber-600" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {credits} Credits
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false);
+                            navigate('/pricing');
+                          }}
+                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          Buy More
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/dashboard');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <Home size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Dashboard</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/my-blogs');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <FileText size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">My Content</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowProfileDropdown(false);
+                          navigate('/pricing');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        <CreditCard size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Pricing</span>
+                      </button>
+
+                      <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+                      >
+                        {isDarkMode ? (
+                          <>
+                            <Sun size={18} className="text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Light Mode</span>
+                          </>
+                        ) : (
+                          <>
+                            <Moon size={18} className="text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left group"
+                      >
+                        <LogOut size={18} className="text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400">
+                          Logout
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>

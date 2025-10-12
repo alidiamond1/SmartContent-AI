@@ -6,6 +6,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import socialPostRoutes from './routes/socialPostRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -53,6 +54,7 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/social-post', socialPostRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

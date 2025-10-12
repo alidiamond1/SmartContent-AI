@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import BlogWriter from './pages/BlogWriter';
+import SocialPosts from './pages/SocialPosts';
+import MySocialPosts from './pages/MySocialPosts';
 import PricingPage from './pages/Pricing';
 import MyBlogs from './pages/MyBlogs';
 import BlogDetail from './pages/BlogDetail';
@@ -33,6 +35,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BlogWriter />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/social-posts"
+        element={
+          <ProtectedRoute>
+            <SocialPosts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-social-posts"
+        element={
+          <ProtectedRoute>
+            <MySocialPosts />
           </ProtectedRoute>
         }
       />

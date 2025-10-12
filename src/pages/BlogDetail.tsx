@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect } from 'react';
 import api from '../config/api';
 import { 
@@ -19,7 +20,9 @@ import {
   Download,
   FileText,
   Copy,
-  Check
+  Check,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface Blog {
@@ -38,6 +41,7 @@ interface Blog {
 export default function BlogDetail() {
   const { id } = useParams();
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [credits, setCredits] = useState(user?.credits || 0);
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -126,8 +130,8 @@ export default function BlogDetail() {
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: false },
     { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer', active: false },
     { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: true },
-    { name: 'Social Posts', icon: Share2, href: '#' },
-    { name: 'Email Creator', icon: Mail, href: '#' },
+    { name: 'Social Posts', icon: Share2, href: '/social-posts' },
+    { name: 'My Posts', icon: Share2, href: '/my-social-posts' },
     { name: 'Analytics', icon: TrendingUp, href: '#' },
   ];
 
@@ -207,6 +211,17 @@ export default function BlogDetail() {
               {credits} Credits
             </button>
             <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDarkMode ? (
+                  <Sun size={20} className="text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <Moon size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
               <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
                 {user?.name?.charAt(0).toUpperCase() || <User size={20} />}
               </div>
