@@ -1,52 +1,166 @@
+import { Star, Quote } from 'lucide-react';
+
 export default function Testimonials() {
   const testimonials = [
     {
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCRcSB3RXxXERt8kmgJitZ_rWUR7B9Z2LKjFcAfk60l4Ug57GZcykIaPq7xeZCg7buXyea9cVd2ShLhgu-6dymTGB_xmTLzIGsElBLT9G4GJl-zF4l0g0RBHX4hd639Xq_I_CH3Wl3APWPLzDvR24VgudAHNVvvdFxONivvzzdGqu5ry5RSZHmKv-6CBJPhcvBCO_Q77MYiSKNJZs1P2xZ7CfUMynxn7a2hg6u6sLIJjPcl8dyU0_gR2Qe3HIKbVNQ8DH-DbH-qA',
-      quote: 'SmartContent AI has revolutionized our content strategy. We\'re seeing a 30% increase in engagement!',
-      author: 'Sarah, Marketing Manager at Tech Innovators Inc.'
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+      quote: 'SmartContent AI has revolutionized our content strategy. We\'re seeing a 30% increase in engagement across all platforms!',
+      author: 'Sarah Mitchell',
+      role: 'Marketing Manager',
+      company: 'Tech Innovators Inc.',
+      rating: 5
     },
     {
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBgxtNXbcGEaTV5np69g5c_iEosdh3fEdBbCwWvIgkV_SHV5WxfVmXDJzIfGFY0zlcD-WIHlS7lLL0zxzTwIRBD1xWGfW3iI9wMLvAmxs-9kneFegz6woK91o7Ga7NaKHSdVEp8oREFlvdbPNMfILSA-M18co0-Su7J7MIKWAon_ArU16hQhBXY131t6Bml89ZHbtrkycyNrOnamj96MadMLnhmbxGf7EFrsQcmfT4mRDJ4ML_fOz5yXJt4F2q7Kqg4F67FwUk8uA',
-      quote: 'The AI-powered tools are incredibly intuitive and save us hours of work each week.',
-      author: 'David, Content Strategist at Creative Solutions Co.'
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+      quote: 'The AI-powered tools are incredibly intuitive and save us hours of work each week. Game-changer for our content team!',
+      author: 'David Chen',
+      role: 'Content Strategist',
+      company: 'Creative Solutions Co.',
+      rating: 5
     },
     {
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDQD9KObCsy2uWXf7_rjXKFL0Q02rVMmqpc6G79TMsEnhELVyZ6iKAVsK0JH7BD-AAaZvjdbcsNPBIhGNsv5k0zqxChg6ioYp8fdNey55nQ7bFMd0mx8QnEJ6JONYqNy0kUOO_1GSleq84dY7S47qj0-iKzsoiCrzGG_91WwzHIA0aEclEtWeBqLgbz31qQQ2fqBFNoGg9XlGnarwVCWaQtHtzDqfA2n480m3z1ezbzqaghomPsW3ZbG1JcDDS7ZSzsUC7ULbE2IA',
-      quote: 'I love how SmartContent AI helps me maintain a consistent brand voice across all platforms.',
-      author: 'Emily, Social Media Specialist at Style Hub'
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+      quote: 'I love how SmartContent AI helps me maintain a consistent brand voice across all platforms. Absolutely essential!',
+      author: 'Emily Rodriguez',
+      role: 'Social Media Specialist',
+      company: 'Style Hub',
+      rating: 5
     }
   ];
 
   return (
-    <section id="testimonials" className="py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            What Our Customers Say
+    <section id="testimonials" className="relative py-24 sm:py-32 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
+      {/* Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm mb-4">
+            <Star className="w-4 h-4 fill-current" />
+            Testimonials
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">
+            <span className="bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 bg-clip-text text-transparent">
+              Loved by Content Creators
+            </span>
           </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            Real stories from real people.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            See what our amazing customers have to say about their experience
           </p>
         </div>
-        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+
+        {/* Testimonials Grid */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="flex flex-col gap-6 rounded-xl bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div
-                className="aspect-square w-full rounded-lg bg-cover bg-center"
-                style={{ backgroundImage: `url("${testimonial.image}")` }}
-              />
+            <div 
+              key={index} 
+              className="group relative flex flex-col rounded-2xl bg-white p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animation: 'fadeInUp 0.6s ease-out forwards',
+                opacity: 0
+              }}
+            >
+              {/* Quote Icon */}
+              <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">
+                <Quote className="w-6 h-6 text-white" />
+              </div>
+
+              {/* Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+
+              {/* Quote */}
               <blockquote className="flex-grow">
-                <p className="text-base font-medium">
+                <p className="text-gray-700 leading-relaxed mb-6 text-base">
                   "{testimonial.quote}"
                 </p>
-                <footer className="mt-4 text-sm text-slate-500">
-                  {testimonial.author}
-                </footer>
               </blockquote>
+
+              {/* Author Info */}
+              <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-100">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all">
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.author}
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div>
+                  <div className="font-bold text-gray-900">{testimonial.author}</div>
+                  <div className="text-sm text-gray-600">{testimonial.role}</div>
+                  <div className="text-xs text-blue-600 font-semibold">{testimonial.company}</div>
+                </div>
+              </div>
+
+              {/* Hover Gradient Border Effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-xl"></div>
             </div>
           ))}
         </div>
+
+        {/* Bottom CTA */}
+        <div className="mt-16 text-center">
+          <p className="text-lg text-gray-600 mb-4">
+            Join <span className="font-bold text-blue-600">10,000+</span> happy customers
+          </p>
+          <a 
+            href="#pricing"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            Start Your Free Trial
+            <Star className="w-5 h-5" />
+          </a>
+        </div>
       </div>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes blob {
+          0%, 100% {
+            transform: translate(0, 0) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+        }
+
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </section>
   );
 }
