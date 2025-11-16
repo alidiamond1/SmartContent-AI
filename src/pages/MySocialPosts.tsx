@@ -204,8 +204,8 @@ export default function MySocialPosts() {
     { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: false },
     { name: 'Social Posts', icon: Share2, href: '/social-posts', active: false },
     { name: 'My Posts', icon: Share2, href: '/my-social-posts', active: true },
-    { name: 'Email Creator', icon: Mail, href: '#' },
-    { name: 'Analytics', icon: TrendingUp, href: '#' },
+    { name: 'Email Creator', icon: Mail, href: '/email-creator', active: false },
+    { name: 'Analytics', icon: TrendingUp, href: '/analytics', active: false },
   ];
 
   return (

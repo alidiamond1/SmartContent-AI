@@ -7,7 +7,8 @@ import authRoutes from './routes/authRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import socialPostRoutes from './routes/socialPostRoutes.js';
-
+import emailRoutes from './routes/emailRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 // Load env vars
 dotenv.config();
 
@@ -55,6 +56,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/social-post', socialPostRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

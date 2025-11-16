@@ -7,7 +7,6 @@ import {
   Home, 
   FileEdit, 
   Share2, 
-  Mail, 
   TrendingUp, 
   Settings, 
   Search,

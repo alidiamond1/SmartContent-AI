@@ -9,7 +9,6 @@ import {
   Share2, 
   Mail, 
   TrendingUp, 
-  Settings, 
   Search,
   LogOut,
   User,
@@ -183,6 +182,8 @@ export default function Dashboard() {
     { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: false },
     { name: 'Social Posts', icon: Share2, href: '/social-posts', active: false },
     { name: 'My Posts', icon: Share2, href: '/my-social-posts', active: false },
+    { name: 'Email Creator', icon: Mail, href: '/email-creator', active: false },
+    { name: 'Analytics', icon: TrendingUp, href: '/analytics', active: false },
     { name: 'Pricing', icon: CreditCard, href: '/pricing', active: false },
   ];
 

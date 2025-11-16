@@ -11,6 +11,8 @@ import MySocialPosts from './pages/MySocialPosts';
 import PricingPage from './pages/Pricing';
 import MyBlogs from './pages/MyBlogs';
 import BlogDetail from './pages/BlogDetail';
+import EmailCreator from './pages/EmailCreator';
+import Analytics from './pages/Analytics';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppRoutes() {
@@ -67,6 +69,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BlogDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/email-creator"
+        element={
+          <ProtectedRoute>
+            <EmailCreator />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         }
       />

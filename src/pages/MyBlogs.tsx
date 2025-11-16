@@ -7,6 +7,7 @@ import {
   Home, 
   FileEdit, 
   Share2, 
+  Mail,
   TrendingUp, 
   Settings, 
   Search,
@@ -123,9 +124,10 @@ export default function MyBlogs() {
     { name: 'Dashboard', icon: Home, href: '/dashboard', active: false },
     { name: 'Blog Writer', icon: FileEdit, href: '/blog-writer', active: false },
     { name: 'My Blogs', icon: FileText, href: '/my-blogs', active: true },
-    { name: 'Social Posts', icon: Share2, href: '/social-posts' },
-    { name: 'My Posts', icon: Share2, href: '/my-social-posts' },
-    { name: 'Analytics', icon: TrendingUp, href: '#' },
+    { name: 'Social Posts', icon: Share2, href: '/social-posts', active: false },
+    { name: 'My Posts', icon: Share2, href: '/my-social-posts', active: false },
+    { name: 'Email Creator', icon: Mail, href: '/email-creator', active: false },
+    { name: 'Analytics', icon: TrendingUp, href: '/analytics', active: false },
   ];
 
   return (
